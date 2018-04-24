@@ -169,6 +169,9 @@ function animate()
     requestAnimationFrame( animate );
 	render();	
 	update();
+	specialobj.rotation.x += 0.01;
+	specialobj.rotation.y += 0.08;
+	renderer.render( scene, camera );
 }
 
 function update()
