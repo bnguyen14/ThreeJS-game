@@ -8,7 +8,8 @@
 </head>
 <body>
 
-<div id="message"></div>
+<div id="Score" align="center" style="z-index:800; position: relative"></div>
+<div id="Life" align="center" style="z-index:800; position: relative"></div>
 
 <script src="js/Three.js"></script>
 <script src="js/Detector.js"></script>
@@ -26,27 +27,19 @@
 <script src="js/info.js"></script>
 <div id="infoButton"></div>
 <div id="infoBox" title="Demo Information">
-Gather the . <br/>
+Gather the rotating red gears. <br/>
 Movement controls: <br/>
 <ul>
-<li>W/S: Translate Forward/Backward
+<li>W/S: Rotate down/up
 <li>A/D: Rotate Left/Right
-<li>Q/E: Translate Left/Right
-<li>R/F: Rotate Up/Down
-<li>Z: Reset position and rotation.
+<li>Space: Move Forward
+<li>R: Move Backward
 </ul>
-This three.js demo is part of a collection at
-<a href="http://stemkoski.github.io/Three.js/">http://stemkoski.github.io/Three.js/</a>
 </div>
-<!-- ------------------------------------------------------------ -->
+<!---------------------------------------------------------------->
 
 <div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
 <script>
-/*
-	Three.js "tutorials by example"
-	Author: Lee Stemkoski
-	Date: July 2013 (three.js v59dev)
-*/
 
 // MAIN
 
@@ -56,17 +49,11 @@ var keyboard = new THREEx.KeyboardState();
 var clock = new THREE.Clock();
 
 // custom global variables
-var MovingCube, specialobj;
-var colorSet = [Math.random() * 0xffffff, 0xff0000];
-var rCube = 0;
-var chaseCamera;
-var chaseCameraActive = false;
+var MovingCube, specialobj, chaseCamera;
+var hasControl = true;
 var collidableMeshList = [];
-var getPoint = true;
 var points = 0;
 var life = 10;
-//var d = new Date()
-//var prevTime = d.getTime();
 init();
 animate();
 
@@ -93,10 +80,6 @@ function init()
 	THREEx.WindowResize(renderer, chaseCamera);
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
 
-	// CONTROLS
-	// MUST REMOVE THIS LINE FOR THIS DEMO.
-	// controls = ...
-
 	// STATS
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
@@ -113,7 +96,7 @@ function init()
 	var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
 	scene.add(skyBox);
 	collidableMeshList.push(skyBox);
-	//scene.fog = new THREE.FogExp2( 0x9999ff, 0.00025 );
+	scene.fog = new THREE.FogExp2( 0x9999ff, 0.00025 );
 	
 	////////////
 	// CUSTOM //
@@ -141,7 +124,7 @@ function init()
 	
 	geometry = new THREE.CubeGeometry( 20, 20, 20, 1, 1, 1 );
 	for ( var i = 0; i < 400; i ++ ) {
-		object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+		object = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: Math.random() * 0xffffff } ) );
 		object.position.x = Math.random() * 800 - 400;
 		object.position.y = Math.random() * 800 - 400;
 		object.position.z = Math.random() * 800 - 400;
@@ -168,96 +151,47 @@ function init()
 				specialobj.translateZ( 1 );
 		}
 	}
-	appendText();
 }
 
-/*
-function clearText()
-{   document.getElementById('message').innerHTML = 'SCORE: '+ points + "\n" + 'LIFE: '+ life;   }
-*/
-function appendText()
-{   document.getElementById('message').innerHTML = "SCORE: " + points + "\nLIFE: "+ life;   }
-
-
-
-
+function updateScore()
+{   document.getElementById("Score").innerHTML = "SCORE: " + points;   }
+function updateLife()
+{   document.getElementById("Life").innerHTML = "LIFE: " + life;   }
 
 function animate() 
 {
-    requestAnimationFrame( animate );
-	render();	
-	update();
 	specialobj.rotation.x += 0.01;
 	specialobj.rotation.y += 0.08;
-	renderer.render( scene, camera );
+    requestAnimationFrame( animate );
+	update();
+	updateLife();
+	updateScore();
+	renderer.render( scene, chaseCamera );
 }
-
-
-
-
-
 
 function update()
 {
-	/*                       // DOESNT WORK
-	var currTime = new Date().getTime();
-        if (prevTime != 0) {
-            var elapsed = currTime - prevTime;
-			rCube -= (1 * elapsed) / 100000.0;
-			specialobj.rotateOnAxis(new THREE.Vector3( 1, 1, 1 ) ,rCube);
-			specialobj.rotat
-        }
-        prevTime = currTime;
-	*/
 	var delta = clock.getDelta(); // seconds.
 	var moveDistance = 200 * delta; // 200 pixels per second
 	var rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
 	
 	// local transformations
-	//topCamera.position.set(0+MovingCube.position.x,200,550+MovingCube.position.z);
-	// move forwards/backwards/left/right
-	if ( keyboard.pressed("W") ){
-		MovingCube.rotateOnAxis( new THREE.Vector3(1,0,0), -rotateAngle);
+	// move forwards/backwards/left/right/up/down
+	if(hasControl){
+		if ( keyboard.pressed("W") )
+			MovingCube.rotateOnAxis( new THREE.Vector3(1,0,0), -rotateAngle);
+		if ( keyboard.pressed("S") )
+			MovingCube.rotateOnAxis( new THREE.Vector3(1,0,0), rotateAngle);
+		if ( keyboard.pressed("A") )
+			MovingCube.rotateOnAxis( new THREE.Vector3(0,1,0), rotateAngle);
+		if ( keyboard.pressed("D") )
+			MovingCube.rotateOnAxis( new THREE.Vector3(0,1,0), -rotateAngle);
+		if ( keyboard.pressed("R") )
+			MovingCube.translateZ(  moveDistance );
+		if ( keyboard.pressed(" ") )
+			MovingCube.translateZ(  -moveDistance );
 	}
-	if ( keyboard.pressed("S") ){
-		MovingCube.rotateOnAxis( new THREE.Vector3(1,0,0), rotateAngle);
-	}
-	if ( keyboard.pressed(" ") ){
-		MovingCube.translateZ(  -moveDistance );
-	}
-	/*
-	if ( keyboard.pressed("Q") ){
-		MovingCube.translateX( -moveDistance );
-	}
-	if ( keyboard.pressed("E") ){
-		MovingCube.translateX(  moveDistance );
-	*/
-	// rotate left/right/up/down
-	var rotation_matrix = new THREE.Matrix4().identity();
-	if ( keyboard.pressed("A") )
-		MovingCube.rotateOnAxis( new THREE.Vector3(0,1,0), rotateAngle);
-	if ( keyboard.pressed("D") )
-		MovingCube.rotateOnAxis( new THREE.Vector3(0,1,0), -rotateAngle);
 	
-	if ( keyboard.pressed("R") )
-	{
-		MovingCube.translateZ(  moveDistance );
-		//scene.myShape.material.color.setHex(0xff3333);
-		//myShape.material.color.setHex(0x3333ff);
-		//MovingCube.rotateOnAxis( new THREE.Vector3(1,0,0), rotateAngle);
-	}
-	/*
-	if ( keyboard.pressed("F") )
-		myShape.material.color.setHex(0xff0000);
-	if ( keyboard.pressed("Z") )
-	{
-		MovingCube.position.set(0,25.1,0);
-		MovingCube.rotation.set(0,0,0);
-	}
-	var relativeCameraOffset = new THREE.Vector3(0,50,200);
-
-	var cameraOffset = relativeCameraOffset.applyMatrix4( MovingCube.matrixWorld );
-	*/
 	
 	
 	chaseCamera.position.x = MovingCube.position.x;
@@ -286,7 +220,9 @@ function update()
 		var collisionResults = ray.intersectObjects( collidableMeshList );
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
 			life--;
-			appendText();
+			hasControl = false;
+			THREE.SceneUtils.traverseHierarchy( object, function ( object ) { object.visible = false; } );
+			//setTimeout(function(){ hasControl = true; }, 3000);
 			MovingCube.position.x = 0;
 			MovingCube.position.y = 0;
 			MovingCube.position.z = 0;
@@ -295,7 +231,6 @@ function update()
 		var collisionResults = ray.intersectObjects( [specialobj] );
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
 			points++;
-			appendText();
 			specialobj.position.x = Math.random() * 800 - 400;
 			specialobj.position.y = Math.random() * 800 - 400;
 			specialobj.position.z = Math.random() * 800 - 400;
@@ -306,17 +241,6 @@ function update()
 	}
 	
 	stats.update();
-}
-
-function render() 
-{
-	renderer.render( scene, chaseCamera );
-/*
-	if (chaseCameraActive)
-	{  renderer.render( scene, chaseCamera );  }
-	else
-	{  renderer.render( scene, topCamera );  }
-	*/
 }
 
 </script>
