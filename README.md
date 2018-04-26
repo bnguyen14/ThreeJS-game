@@ -1,6 +1,6 @@
 # ThreeJS-game
 
-Example of implementation of Threejs
+Example of Threejs implementation
 
 By: Bao Nguyen
     Tevernaugh Davis
@@ -11,4 +11,4 @@ Resources:
     
 Sound provided by: https://freesound.org/
 
-background music: Nier Automata - City Ruins - Rays of Light (8 bit)
+background music: Nier Automata - City Ruins - Rays of Light (8 bit) 
