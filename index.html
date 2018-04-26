@@ -54,7 +54,8 @@ var hasControl = true;
 var collidableMeshList = [];
 var points = -1;
 var life = 10;
-var sounds = [];
+var coin = new Audio('sounds/collectcoin.wav');
+var bump = new Audio('sounds/8-bit-bump.wav');
 init();
 animate();
 
@@ -256,6 +257,7 @@ function update()
 		var collisionResults = ray.intersectObjects( collidableMeshList );
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
 			life--;
+			bump.play();
 			MovingCube.position.x = 0;
 			MovingCube.position.y = 25.1;
 			MovingCube.position.z = 0;
@@ -265,7 +267,7 @@ function update()
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
 			points++;
 			//var audio = MovingCube.children[ 0 ];
-			//audio.play();
+			coin.play();
 			specialobj.position.x = Math.random() * 800 - 400;
 			specialobj.position.y = Math.random() * 800 - 400;
 			specialobj.position.z = Math.random() * 800 - 400;
