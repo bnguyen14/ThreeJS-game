@@ -1,8 +1,8 @@
 # ThreeJS-game
 
 Example of Threejs implementation
-
-By: Bao Nguyen
+\n
+By: Bao Nguyen \n
     Tevernaugh Davis
      
 Resources:
