@@ -8,8 +8,8 @@
 </head>
 <body>
 
-<div id="Score" align="center" style="z-index:800; position: relative"></div>
-<div id="Life" align="center" style="z-index:800; position: relative"></div>
+<div id="Score" align="center" style="z-index:800; position: relative; font-size: 2.5em"></div>
+<div id="Life" align="center" style="z-index:800; position: relative; font-size: 2.5em"></div>
 
 <script src="js/Three.js"></script>
 <script src="js/Detector.js"></script>
@@ -52,8 +52,9 @@ var clock = new THREE.Clock();
 var MovingCube, specialobj, chaseCamera;
 var hasControl = true;
 var collidableMeshList = [];
-var points = 0;
+var points = -1;
 var life = 10;
+var sounds = [];
 init();
 animate();
 
@@ -76,10 +77,16 @@ function init()
 	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	container = document.getElementById( 'ThreeJS' );
 	container.appendChild( renderer.domElement );
+	
+	// AUDIO DOESNT WORK
+	//var audioLoader = new THREE.AudioLoader();
+	//var listener = new THREE.AudioListener();
+	//chaseCamera.add( listener );
+	
 	// EVENTS
 	THREEx.WindowResize(renderer, chaseCamera);
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
-
+	
 	// STATS
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
@@ -88,7 +95,8 @@ function init()
 	container.appendChild( stats.domElement );
 	// LIGHT
 	var light = new THREE.PointLight(0xffffff);
-	light.position.set(0,250,0);
+	//light.position.set(0,0,0);
+	
 	scene.add(light);
 	// SKYBOX/FOG
 	var skyBoxGeometry = new THREE.CubeGeometry( 850, 850, 850 );
@@ -101,13 +109,25 @@ function init()
 	////////////
 	// CUSTOM //
 	////////////
-	
 	var geometry = new THREE.SphereGeometry( 12, 8, 8 );
 	var material = new THREE.MeshLambertMaterial( {color: 0xffff00} );
 	MovingCube = new THREE.Mesh( geometry, material );
 	MovingCube.position.set(0, 25.1, 0);
-	scene.add( MovingCube );	
-	
+	scene.add( MovingCube );
+	/* DOESNT WORK
+	audioLoader.load( 'sounds/collectcoin.wav', function ( buffer ) {
+		var audio = new THREE.PositionalAudio( listener );
+		audio.setBuffer( buffer );
+		MovingCube.add(audio);
+		sounds.push(ball);
+	});
+	audioLoader.load( '8-bit-bump.aiff', function ( buffer ) {
+		var audio = new THREE.PositionalAudio( listener );
+		audio.setBuffer( buffer );
+		MovingCube.add(audio);
+		sounds.push(ball);
+	});
+	*/
 	// a little bit of scenery...
 
 	var ambientlight = new THREE.AmbientLight(0x111111);
@@ -137,26 +157,41 @@ function init()
 		scene.add( object );
 		collidableMeshList.push(object);
 	}
-	
-	var specialobjPoint = specialobj.position.clone();
+}
+
+function updateScore(){
+	document.getElementById("Score").innerHTML = "SCORE: " + points;  
+	if(life==0){
+		document.getElementById("Score").innerHTML = "GAME OVER";
+	}
+}
+function updateLife(){
+	document.getElementById("Life").innerHTML = "LIFE: " + life;   
+	if(life==0){
+		hasControl = false;
+		document.getElementById("Score").style.font.size = "5em";
+		document.getElementById("Life").innerHTML = "press R to replay";
+		
+	}
+}
+
+function checkObj(){
+	var originPoint = specialobj.position.clone();
 	for (var vertexIndex = 0; vertexIndex < specialobj.geometry.vertices.length; vertexIndex++)
 	{
 		var localVertex = specialobj.geometry.vertices[vertexIndex].clone();
 		var globalVertex = localVertex.applyMatrix4( specialobj.matrix );
 		var directionVector = globalVertex.sub( specialobj.position );
 		
-		var ray = new THREE.Raycaster( specialobjPoint, directionVector.clone().normalize() );
+		var ray = new THREE.Raycaster( originPoint, directionVector.clone().normalize() );
 		var collisionResults = ray.intersectObjects( collidableMeshList );
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
-				specialobj.translateZ( 1 );
+			specialobj.position.x = Math.random() * 800 - 400;
+			specialobj.position.y = Math.random() * 800 - 400;
+			specialobj.position.z = Math.random() * 800 - 400;
 		}
 	}
 }
-
-function updateScore()
-{   document.getElementById("Score").innerHTML = "SCORE: " + points;   }
-function updateLife()
-{   document.getElementById("Life").innerHTML = "LIFE: " + life;   }
 
 function animate() 
 {
@@ -164,8 +199,9 @@ function animate()
 	specialobj.rotation.y += 0.08;
     requestAnimationFrame( animate );
 	update();
-	updateLife();
+	checkObj();
 	updateScore();
+	updateLife();
 	renderer.render( scene, chaseCamera );
 }
 
@@ -190,9 +226,15 @@ function update()
 			MovingCube.translateZ(  moveDistance );
 		if ( keyboard.pressed(" ") )
 			MovingCube.translateZ(  -moveDistance );
+	}else{
+		if ( keyboard.pressed("R") ){
+			life = 10;
+			points = 0;
+			document.getElementById("Life").innerHTML = "LIFE: " + life;
+			document.getElementById("Score").innerHTML = "SCORE: " + points;
+			hasControl = true;
+		}
 	}
-	
-	
 	
 	chaseCamera.position.x = MovingCube.position.x;
 	chaseCamera.position.y = MovingCube.position.y;
@@ -204,12 +246,6 @@ function update()
 	chaseCamera.translateY(10);
 
 	var originPoint = MovingCube.position.clone();
-
-	//clearText();
-
-
-
-	
 	for (var vertexIndex = 0; vertexIndex < MovingCube.geometry.vertices.length; vertexIndex++)
 	{
 		var localVertex = MovingCube.geometry.vertices[vertexIndex].clone();
@@ -220,17 +256,16 @@ function update()
 		var collisionResults = ray.intersectObjects( collidableMeshList );
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
 			life--;
-			hasControl = false;
-			THREE.SceneUtils.traverseHierarchy( object, function ( object ) { object.visible = false; } );
-			//setTimeout(function(){ hasControl = true; }, 3000);
 			MovingCube.position.x = 0;
-			MovingCube.position.y = 0;
+			MovingCube.position.y = 25.1;
 			MovingCube.position.z = 0;
 			break;
 		}
 		var collisionResults = ray.intersectObjects( [specialobj] );
 		if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) {
 			points++;
+			//var audio = MovingCube.children[ 0 ];
+			//audio.play();
 			specialobj.position.x = Math.random() * 800 - 400;
 			specialobj.position.y = Math.random() * 800 - 400;
 			specialobj.position.z = Math.random() * 800 - 400;
@@ -239,7 +274,6 @@ function update()
 		}	
 
 	}
-	
 	stats.update();
 }
 
