@@ -8,8 +8,7 @@ By: Bao Nguyen,
      
      
 Resources:
-    https://github.com/stemkoski/stemkoski.github.com
-    https://threejs.org/
+    https://github.com/stemkoski/stemkoski.github.com  |  https://threejs.org/
     
     
 Sound provided by: https://freesound.org/
